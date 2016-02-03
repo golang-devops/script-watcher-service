@@ -15,7 +15,9 @@ type app struct {
 
 func (a *app) OnStop() {
 	defer recover()
-	close(a.watcherDoneChannel)
+	if a.watcherDoneChannel != nil {
+		close(a.watcherDoneChannel)
+	}
 }
 
 func (a *app) Run(logger service2.Logger) {
