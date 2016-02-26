@@ -60,7 +60,6 @@ func (a *app) startWatching(watchDir string) {
 				isWrite := ev.Op&fsnotify.Write == fsnotify.Write
 				isDelete := ev.Op&fsnotify.Remove == fsnotify.Remove
 
-				a.logger.Infof("EVENT: %s", ev.String())
 				if isWrite {
 					if !fileEventManagr.isDuplicateEvent(ev.Name) {
 						a.handleFile(ev.Name)
