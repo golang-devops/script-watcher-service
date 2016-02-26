@@ -52,10 +52,10 @@ func (a *app) startWatching(watchDir string) {
 		for {
 			select {
 			case ev := <-watcher.Event:
-				if ev.IsCreate() {
+				if ev.IsCreate() || ev.IsModify() {
 					a.handleFile(ev.Name)
 				} else if !ev.IsDelete() {
-					a.logger.Warningf("Non create/delete event: %s", ev.String())
+					a.logger.Warningf("Non create/modify/delete event: %s", ev.String())
 				}
 				break
 			case e := <-watcher.Error:
