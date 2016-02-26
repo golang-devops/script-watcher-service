@@ -57,16 +57,17 @@ func (a *app) startWatching(watchDir string) {
 		for {
 			select {
 			case ev := <-watcher.Events:
+				isCreate := ev.Op&fsnotify.Create == fsnotify.Create
 				isWrite := ev.Op&fsnotify.Write == fsnotify.Write
-				isDelete := ev.Op&fsnotify.Remove == fsnotify.Remove
+				isRemove := ev.Op&fsnotify.Remove == fsnotify.Remove
 
-				if isWrite {
+				if isCreate || isWrite {
 					if !fileEventManagr.isDuplicateEvent(ev.Name) {
 						a.handleFile(ev.Name)
 					}
-				} else if !isDelete {
+				} else if !isRemove {
 					//Do not care about DELETE. Actually we delete the file
-					a.logger.Warningf("Non create/modify/delete event: %s", ev.String())
+					a.logger.Warningf("Non create/write/remove event: %s", ev.String())
 				}
 				break
 			case e := <-watcher.Errors:
