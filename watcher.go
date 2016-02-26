@@ -1,9 +1,14 @@
 package main
 
 import (
-	"github.com/howeyc/fsnotify"
+	"github.com/fsnotify/fsnotify"
 	"os"
 	"path/filepath"
+	"time"
+)
+
+var (
+	fileEventManagr *fileEventManager = &fileEventManager{fileEventTimes: make(map[string]time.Time)}
 )
 
 func (a *app) handleFile(filePath string) {
@@ -51,21 +56,28 @@ func (a *app) startWatching(watchDir string) {
 	go func() {
 		for {
 			select {
-			case ev := <-watcher.Event:
-				if ev.IsCreate() || ev.IsModify() {
-					a.handleFile(ev.Name)
-				} else if !ev.IsDelete() {
+			case ev := <-watcher.Events:
+				isWrite := ev.Op&fsnotify.Write == fsnotify.Write
+				isDelete := ev.Op&fsnotify.Remove == fsnotify.Remove
+
+				a.logger.Infof("EVENT: %s", ev.String())
+				if isWrite {
+					if !fileEventManagr.isDuplicateEvent(ev.Name) {
+						a.handleFile(ev.Name)
+					}
+				} else if !isDelete {
+					//Do not care about DELETE. Actually we delete the file
 					a.logger.Warningf("Non create/modify/delete event: %s", ev.String())
 				}
 				break
-			case e := <-watcher.Error:
+			case e := <-watcher.Errors:
 				a.logger.Errorf("Watcher error: %s", e.Error())
 			}
 		}
 	}()
 
 	a.logger.Infof("Now watching dir '%s'", watchDir)
-	err = watcher.Watch(watchDir)
+	err = watcher.Add(watchDir)
 	checkError(err)
 
 	<-a.watcherDoneChannel
