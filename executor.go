@@ -46,11 +46,13 @@ func (e *executor) execute(a *app, scriptFile string) {
 func getScriptExecutor(scriptFilePath string) *executor {
 	lowerPath := strings.ToLower(scriptFilePath)
 
-	if strings.HasSuffix(lowerPath, ".py") {
+	if strings.HasSuffix(lowerPath, ".bat") {
+		return &executor{"cmd", []string{"/c"}}
+	} else if strings.HasSuffix(lowerPath, ".sh") {
+		return &executor{"bash", []string{"-c"}}
+	} else if strings.HasSuffix(lowerPath, ".py") {
 		return &executor{"python", []string{}}
-	}
-
-	if strings.HasSuffix(lowerPath, ".go") {
+	} else if strings.HasSuffix(lowerPath, ".go") {
 		return &executor{"go", []string{"run"}}
 	}
 
